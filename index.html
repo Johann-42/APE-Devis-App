@@ -101,6 +101,27 @@
     margin-top: 6px; font-variant-numeric: tabular-nums; color: var(--muted);
   }
   .lien-externe { color: var(--flame); font-weight: 700; }
+  .garder {
+    display: inline-flex; align-items: center; gap: 8px; font-size: 13px;
+    color: #C9B8A8; cursor: pointer;
+  }
+  .garder input { width: 18px; height: 18px; accent-color: var(--ember);
+    -webkit-appearance: checkbox; appearance: checkbox; margin: 0; }
+  .devis-enregistre {
+    display: grid; grid-template-columns: 1fr auto auto; gap: 10px;
+    align-items: center; padding: 10px 0; border-bottom: 1px solid #F4EDE3;
+  }
+  .devis-enregistre:last-child { border-bottom: none; }
+  .devis-enregistre .titre { font-weight: 700; font-size: 14.5px; }
+  .devis-enregistre .meta { color: var(--muted); font-size: 12.5px; }
+  .devis-enregistre button { padding: 8px 14px; font-size: 13.5px; min-height: 38px; }
+  .devis-enregistre .supprimer { background: transparent; color: var(--muted);
+    border: 1px solid var(--rule); }
+  .devis-enregistre .supprimer:hover { background: #FBE9E4; color: #B3382A; }
+  @media (max-width: 640px) {
+    .devis-enregistre { grid-template-columns: 1fr auto; }
+    .devis-enregistre .meta { grid-column: 1 / -1; }
+  }
   .article .total {
     text-align: right; font-weight: 700; font-variant-numeric: tabular-nums;
     color: var(--muted); font-size: 14px;
@@ -263,11 +284,70 @@
     .saisie, .no-print { display: none !important; }
     .feuille {
       max-width: none; margin: 0; box-shadow: none;
-      border-radius: 0; font-size: 9.5pt;
+      border-radius: 0; font-size: 8.6pt; line-height: 1.35;
       /* Les marges d'impression sont portées par le document lui-même,
          puisque @page est à zéro. */
-      padding: 13mm 13mm 12mm;
+      padding: 11mm 12mm 10mm;
     }
+
+    /* Densité d'impression : un devis complet (toutes les entrées, les huit
+       pizzas, les desserts et les prestations) doit tenir sur deux pages, y
+       compris avec les polices plus larges de macOS. Toutes les valeurs
+       ci-dessous sont en points, indépendantes du rendu écran en pixels. */
+    .doc-entete { margin-bottom: 10pt; }
+    .doc-entete .titre { font-size: 22pt; }
+    .doc-entete .marque .nom { font-size: 14pt; }
+    .doc-entete .marque .baseline { margin: 1pt 0 4pt; }
+    .doc-entete .coordonnees, .doc-entete .emission { font-size: 8pt; line-height: 1.35; }
+
+    .destinataire { padding: 6pt 10pt; margin-bottom: 8pt; }
+    .destinataire .nom { font-size: 12pt; margin: 1pt 0 1pt; }
+    .destinataire .contact { font-size: 8pt; }
+
+    .ardoise { margin-bottom: 9pt; }
+    .ardoise .cellule { padding: 5pt 9pt 5pt 0; }
+    .ardoise .cellule + .cellule { padding-left: 9pt; }
+    .ardoise .valeur { font-size: 11pt; }
+
+    table.lignes th { padding: 4pt 7pt; }
+    table.lignes td { padding: 2.6pt 7pt; }
+    table.lignes tr.groupe td { padding: 2.4pt 7pt; }
+    td .unite { font-size: 7.6pt; }
+
+    .doc-bas { margin-top: 9pt; gap: 18pt; }
+    .conditions { font-size: 7.8pt; line-height: 1.4; }
+    .notes { padding: 5pt 9pt; margin-top: 7pt; font-size: 7.8pt; }
+    table.totaux td { padding: 2pt 0; }
+    .pastille { padding: 7pt 14pt; margin-top: 5pt; }
+    .pastille .montant { font-size: 17pt; }
+    table.echeances { margin-top: 5pt; }
+    table.echeances td { padding: 1pt 0; font-size: 8pt; }
+    .signature { margin-top: 9pt; padding: 6pt 9pt; font-size: 8pt; }
+    .signature .zone { height: 30pt; }
+    .pied { margin-top: 12pt; padding-top: 6pt; font-size: 7.4pt; }
+
+    /* Au-delà de 14 lignes, le document passe en mode dense (classe posée par
+       le script) : le devis complet tient alors sur deux pages même avec les
+       polices plus larges de macOS. */
+    .feuille.dense { font-size: 8pt; padding: 9mm 11mm 8mm; }
+    .feuille.dense .doc-entete { margin-bottom: 7pt; }
+    .feuille.dense .doc-entete .titre { font-size: 19pt; }
+    .feuille.dense .destinataire { padding: 5pt 9pt; margin-bottom: 6pt; }
+    .feuille.dense .ardoise { margin-bottom: 7pt; }
+    .feuille.dense .ardoise .cellule { padding: 4pt 8pt 4pt 0; }
+    .feuille.dense .ardoise .valeur { font-size: 10pt; }
+    .feuille.dense table.lignes th { padding: 3pt 6pt; }
+    .feuille.dense table.lignes td { padding: 1.9pt 6pt; }
+    .feuille.dense table.lignes tr.groupe td { padding: 1.8pt 6pt; }
+    .feuille.dense td .unite { font-size: 7pt; }
+    .feuille.dense .doc-bas { margin-top: 7pt; }
+    .feuille.dense .conditions { font-size: 7.4pt; }
+    .feuille.dense .notes { padding: 4pt 8pt; margin-top: 5pt; font-size: 7.4pt; }
+    .feuille.dense .pastille { padding: 6pt 12pt; }
+    .feuille.dense .pastille .montant { font-size: 15pt; }
+    .feuille.dense .signature { margin-top: 7pt; padding: 5pt 8pt; }
+    .feuille.dense .signature .zone { height: 24pt; }
+    .feuille.dense .pied { margin-top: 9pt; }
     table.lignes thead { display: table-header-group; }
     table.lignes tr, .signature, .doc-bas { break-inside: avoid; }
     .doc-entete .titre { font-size: 26pt; }
@@ -392,8 +472,26 @@
       <div class="detail" id="barre_detail"></div>
       <div class="detail" id="nom_fichier"></div>
     </div>
-    <button type="button" onclick="window.print()">Enregistrer en PDF</button>
+    <label class="garder">
+      <input type="checkbox" id="garder_historique" checked>
+      Conserver dans l'historique
+    </label>
+    <button type="button" onclick="enregistrerEtImprimer()">Enregistrer en PDF</button>
   </div>
+
+  <fieldset style="margin-top:16px">
+    <legend>Historique</legend>
+    <p class="aide" id="etat_historique"></p>
+    <div id="liste_historique"></div>
+    <div class="actions">
+      <button type="button" class="secondaire" onclick="exporterHistorique()">
+        Exporter une sauvegarde</button>
+      <button type="button" class="secondaire"
+              onclick="document.getElementById('import_fichier').click()">
+        Importer une sauvegarde</button>
+      <input type="file" id="import_fichier" accept=".json" hidden>
+    </div>
+  </fieldset>
 
   <div class="actions">
     <button type="button" class="secondaire" onclick="reinitialiser()">Nouveau devis</button>
@@ -1157,6 +1255,9 @@ function rafraichir() {
   el("d_acompte").textContent = euro(acompte);
   el("d_solde").textContent = euro(total - acompte);
 
+  /* Un devis chargé bascule en impression dense pour rester sur deux pages. */
+  el("feuille").classList.toggle("dense", lignesFinales.length > 14);
+
   /* précisions */
   const notes = el("notes").value.split("\n").map(t => t.trim()).filter(Boolean);
   el("d_notes").hidden = notes.length === 0;
@@ -1193,11 +1294,208 @@ if ("serviceWorker" in navigator && location.protocol === "https:") {
   navigator.serviceWorker.register("sw.js").catch(() => {});
 }
 
+/* ---------- historique des devis ---------- */
+/* Les devis sont conservés dans le navigateur (localStorage), pas sur un
+   serveur : ils restent sur l'appareil qui les a créés, et disparaissent si tu
+   effaces les données de site. D'où le bouton d'export de sauvegarde. */
+
+const CLE_HISTORIQUE = "devis-ape-historique";
+
+function stockageDisponible() {
+  try {
+    localStorage.setItem("__test", "1");
+    localStorage.removeItem("__test");
+    return true;
+  } catch (e) {
+    return false;   // navigation privée, ou page ouverte dans un cadre restreint
+  }
+}
+
+function lireHistorique() {
+  if (!stockageDisponible()) return [];
+  try {
+    return JSON.parse(localStorage.getItem(CLE_HISTORIQUE) || "[]");
+  } catch (e) {
+    return [];
+  }
+}
+
+function ecrireHistorique(liste) {
+  try {
+    localStorage.setItem(CLE_HISTORIQUE, JSON.stringify(liste));
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+/* Photographie de tous les champs saisis, cases comprises. */
+function etatFormulaire() {
+  const etat = {};
+  document.querySelectorAll(".saisie input, .saisie textarea, .saisie select")
+    .forEach(champ => {
+      if (!champ.id || champ.type === "file") return;
+      etat[champ.id] = champ.type === "checkbox" ? champ.checked : champ.value;
+    });
+  return etat;
+}
+
+/* Restauration : on repose les valeurs puis on aligne `dernierConvives` avant
+   de rafraîchir, sinon les calculs automatiques écraseraient les quantités
+   ajustées à la main dans le devis d'origine. */
+function appliquerEtat(etat) {
+  Object.keys(etat).forEach(id => {
+    const champ = el(id);
+    if (!champ) return;
+    if (champ.type === "checkbox") champ.checked = !!etat[id];
+    else champ.value = etat[id];
+  });
+  dernierConvives = parseInt(el("ev_convives").value) || 0;
+  rafraichir();
+}
+
+function enregistrerDevis() {
+  const numero = el("d_numero").textContent.replace("N° ", "").trim();
+  const nom = el("cli_nom").value.trim();
+  if (!nom) {
+    el("etat_historique").textContent =
+      "Devis non enregistré : renseigne d'abord le nom du client.";
+    return false;
+  }
+  const entree = {
+    numero: numero,
+    nom: nom,
+    dateEvent: el("ev_date").value,
+    convives: el("ev_convives").value,
+    total: el("d_total").textContent,
+    enregistreLe: new Date().toISOString(),
+    etat: etatFormulaire()
+  };
+  // Même numéro = même devis : on remplace au lieu d'empiler les doublons.
+  const liste = lireHistorique().filter(d => d.numero !== numero);
+  liste.unshift(entree);
+  const ok = ecrireHistorique(liste);
+  majHistorique();
+  if (!ok) {
+    el("etat_historique").textContent =
+      "Enregistrement impossible : la mémoire du navigateur est pleine ou bloquée.";
+  }
+  return ok;
+}
+
+function enregistrerEtImprimer() {
+  if (el("garder_historique").checked) enregistrerDevis();
+  window.print();
+}
+
+function ouvrirDevis(numero) {
+  const entree = lireHistorique().find(d => d.numero === numero);
+  if (!entree) return;
+  appliquerEtat(entree.etat);
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function supprimerDevis(numero) {
+  if (!confirm("Supprimer le devis " + numero + " de l'historique ?")) return;
+  ecrireHistorique(lireHistorique().filter(d => d.numero !== numero));
+  majHistorique();
+}
+
+function majHistorique() {
+  const zone = el("liste_historique");
+  const etat = el("etat_historique");
+
+  if (!stockageDisponible()) {
+    zone.innerHTML = "";
+    etat.textContent = "Historique indisponible ici : la mémoire du navigateur est "
+      + "bloquée (navigation privée, ou aperçu intégré). Ouvre l'outil dans "
+      + "Safari ou Chrome pour en profiter.";
+    return;
+  }
+
+  const liste = lireHistorique();
+  etat.textContent = liste.length
+    ? liste.length + " devis conservé" + (liste.length > 1 ? "s" : "")
+      + " sur cet appareil. « Ouvrir » recharge toute la saisie pour la modifier."
+    : "Aucun devis conservé pour l'instant. La case sous le total enregistre "
+      + "le devis au moment de l'impression.";
+
+  zone.innerHTML = "";
+  liste.forEach(devis => {
+    const ligne = document.createElement("div");
+    ligne.className = "devis-enregistre";
+
+    const infos = document.createElement("div");
+    const evenement = devis.dateEvent ? dateFr(devis.dateEvent) : "date à définir";
+    const enregistre = new Date(devis.enregistreLe)
+      .toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", year: "2-digit" });
+    infos.innerHTML = "<div class=\"titre\">" + devis.numero + "</div>"
+      + "<div class=\"meta\">" + evenement + " · " + devis.convives + " convives · "
+      + devis.total + " · enregistré le " + enregistre + "</div>";
+
+    const ouvrir = document.createElement("button");
+    ouvrir.type = "button";
+    ouvrir.textContent = "Ouvrir";
+    ouvrir.addEventListener("click", () => ouvrirDevis(devis.numero));
+
+    const supprimer = document.createElement("button");
+    supprimer.type = "button";
+    supprimer.className = "supprimer";
+    supprimer.textContent = "Supprimer";
+    supprimer.addEventListener("click", () => supprimerDevis(devis.numero));
+
+    ligne.append(infos, ouvrir, supprimer);
+    zone.appendChild(ligne);
+  });
+}
+
+/* Sauvegarde hors du navigateur : un fichier .json à ranger où tu veux. */
+function exporterHistorique() {
+  const liste = lireHistorique();
+  if (!liste.length) {
+    el("etat_historique").textContent = "Rien à exporter pour l'instant.";
+    return;
+  }
+  const contenu = JSON.stringify({ version: 1, devis: liste }, null, 2);
+  const lien = document.createElement("a");
+  lien.href = URL.createObjectURL(new Blob([contenu], { type: "application/json" }));
+  lien.download = "sauvegarde-devis-"
+    + new Date().toISOString().slice(0, 10) + ".json";
+  lien.click();
+  URL.revokeObjectURL(lien.href);
+}
+
+function importerHistorique(fichier) {
+  const lecteur = new FileReader();
+  lecteur.onload = () => {
+    try {
+      const donnees = JSON.parse(lecteur.result);
+      const importes = Array.isArray(donnees) ? donnees : donnees.devis;
+      if (!Array.isArray(importes)) throw new Error("format inattendu");
+      const existants = lireHistorique();
+      const numeros = new Set(importes.map(d => d.numero));
+      ecrireHistorique(importes.concat(existants.filter(d => !numeros.has(d.numero))));
+      majHistorique();
+      el("etat_historique").textContent =
+        importes.length + " devis importé(s) et fusionné(s) avec l'historique.";
+    } catch (e) {
+      el("etat_historique").textContent =
+        "Import impossible : le fichier n'est pas une sauvegarde valide.";
+    }
+  };
+  lecteur.readAsText(fichier);
+}
+
 /* ---------- démarrage ---------- */
 construireCatalogue();
 el("ev_emission").value = new Date().toISOString().slice(0, 10);
 document.querySelectorAll(".saisie input, .saisie textarea, .saisie select")
   .forEach(champ => champ.addEventListener("input", rafraichir));
+el("import_fichier").addEventListener("change", evenement => {
+  if (evenement.target.files[0]) importerHistorique(evenement.target.files[0]);
+  evenement.target.value = "";
+});
+majHistorique();
 rafraichir();
 </script>
 </body>
