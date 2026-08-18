@@ -367,17 +367,17 @@
     <legend>Client</legend>
     <div class="grille">
       <label class="champ"><span>Nom du client</span>
-        <input id="cli_nom" type="text" placeholder="MARTIN Lola"></label>
+        <input id="cli_nom" type="text"></label>
       <label class="champ"><span>Téléphone</span>
-        <input id="cli_tel" type="tel" placeholder="06 12 34 56 78"></label>
+        <input id="cli_tel" type="tel"></label>
       <label class="champ"><span>E-mail</span>
-        <input id="cli_mail" type="email" placeholder="prenom.nom@mail.fr"></label>
+        <input id="cli_mail" type="email"></label>
       <label class="champ"><span>Adresse du lieu</span>
-        <input id="cli_adresse" type="text" placeholder="Chemin de la Bruyère"></label>
+        <input id="cli_adresse" type="text"></label>
       <label class="champ"><span>Code postal</span>
-        <input id="cli_cp" type="text" inputmode="numeric" placeholder="42100"></label>
+        <input id="cli_cp" type="text" inputmode="numeric"></label>
       <label class="champ"><span>Ville</span>
-        <input id="cli_ville" type="text" placeholder="Saint-Étienne"></label>
+        <input id="cli_ville" type="text"></label>
     </div>
   </fieldset>
 
@@ -396,7 +396,7 @@
       <label class="champ"><span>Service</span>
         <select id="ev_service"><option>Soir</option><option>Midi</option></select></label>
       <label class="champ"><span>Convives</span>
-        <input id="ev_convives" type="number" min="1" step="5" value="60"></label>
+        <input id="ev_convives" type="number" min="1" step="5"></label>
       <label class="champ"><span>Type de client</span>
         <select id="ev_client"><option>Particulier</option><option>Professionnel</option></select></label>
       <label class="champ"><span>Date du devis</span>
@@ -852,7 +852,7 @@ function totalPizzasConseille(convives) {
    du nombre de variétés le plus proche de l'objectif (à égalité, on arrondit
    vers le haut plutôt que de servir trop peu). */
 function parVariete(objectif, varietes) {
-  if (varietes < 1) return 0;
+  if (varietes < 1 || objectif <= 0) return 0;
   return Math.max(1, Math.round(objectif / varietes));
 }
 
@@ -931,6 +931,11 @@ function calculAutomatique() {
 }
 
 function majEncartPizzas(convives) {
+  if (!convives) {
+    el("encart_pizzas").innerHTML = "<strong>Pizzas</strong><div class=\"repartition\">"
+      + "Renseigne le nombre de convives pour lancer les calculs.</div>";
+    return;
+  }
   const conseil = totalPizzasConseille(convives);
   const objectif = parseInt(el("piz_total").value) || 0;
   const varietes = Math.max(1, parseInt(el("piz_varietes").value) || 1);
@@ -1001,6 +1006,13 @@ function detailEntrees(convives) {
 }
 
 function majEncartEntrees(convives) {
+  if (!convives) {
+    el("encart_entrees").innerHTML = "";
+    el("note_entrees").textContent =
+      "Coche les assortiments retenus : les quantités se calculent d'après le "
+      + "nombre de convives.";
+    return;
+  }
   el("encart_entrees").innerHTML = "<strong>Entrées</strong>"
     + "<div class=\"repartition\">" + detailEntrees(convives).join("<br>") + "</div>";
   const total = FAMILLES_ENTREES.reduce((s, f) => s + refsCochees(f.refs).length, 0);
@@ -1031,6 +1043,11 @@ function majDesserts(convives) {
 }
 
 function majNoteDesserts(convives) {
+  if (!convives) {
+    el("note_desserts").textContent =
+      "Coche un dessert : sa quantité suit le nombre de convives.";
+    return;
+  }
   const coches = dessertsCoches();
   const plateaux = plateauxDesserts(convives);
   el("note_desserts").textContent = coches.length
@@ -1269,7 +1286,7 @@ function reinitialiser() {
   if (!confirm("Effacer toutes les saisies et repartir d'un devis vierge ?")) return;
   document.querySelectorAll(".saisie input, .saisie textarea").forEach(champ => {
     if (champ.id.startsWith("prix_")) return;
-    if (champ.type === "number") champ.value = champ.id === "ev_convives" ? 60 : 0;
+    if (champ.type === "number") champ.value = champ.id === "ev_convives" ? "" : 0;
     else champ.value = "";
   });
   document.querySelectorAll('.article input[type=checkbox]')
