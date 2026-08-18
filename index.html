@@ -555,12 +555,15 @@ const CATALOGUE = [
   ]},
   { cat: "Prestation", items: [
     { ref: "pre1", nom: "Forfait privatisation (installation, service, matériel, buffet, décoration)",
-      unite: "forfait", prix: 1000, qteDefaut: 1 },
-    { ref: "pre2", nom: "Frais de déplacement", unite: "forfait", prix: 0, qteDefaut: 1 },
+      unite: "forfait", prix: 1000, qteDefaut: 1, pasPrix: 100 },
+    { ref: "pre2", nom: "Frais de déplacement", unite: "forfait", prix: 250, qteDefaut: 1, pasPrix: 10 },
     { ref: "pre3", nom: "Autre prestation", unite: "", prix: 0, libre: true },
     { ref: "pre4", nom: "Autre prestation", unite: "", prix: 0, libre: true }
   ]}
 ];
+
+/* Plancher de facturation du déplacement, quelle que soit la distance. */
+const DEPLACEMENT_MINIMUM = 250;
 
 const MOIS = ["janvier","février","mars","avril","mai","juin",
               "juillet","août","septembre","octobre","novembre","décembre"];
@@ -651,7 +654,10 @@ function construireCatalogue() {
       qte.addEventListener("input", rafraichir);
 
       const prix = document.createElement("input");
-      prix.type = "number"; prix.min = "0"; prix.step = "0.5";
+      prix.type = "number"; prix.min = "0";
+      // Le pas des flèches suit l'ordre de grandeur de l'article : 100 € pour un
+      // forfait, 0,50 € pour une pizza.
+      prix.step = article.pasPrix || 0.5;
       prix.value = article.prix;
       prix.id = "prix_" + article.ref;
       prix.setAttribute("aria-label", "Prix " + article.nom);
@@ -1029,11 +1035,18 @@ function rafraichir() {
   const km = parseFloat(el("dep_km").value) || 0;
   const tarif = parseFloat(el("dep_tarif").value) || 0;
   const franchise = parseFloat(el("dep_franchise").value) || 0;
-  const montantDep = Math.round(Math.max(0, km - franchise) * 2 * tarif * 100) / 100;
+  const kmFactures = Math.max(0, km - franchise) * 2;
+  const calcule = Math.round(kmFactures * tarif * 100) / 100;
+  const montantDep = Math.max(DEPLACEMENT_MINIMUM, calcule);
+
   el("calcul_deplacement").textContent = km > 0
-    ? "Aller-retour facturé : " + Math.max(0, km - franchise) * 2 + " km × "
-      + euro(tarif) + " = " + euro(montantDep) + " — reporté sur la ligne « Frais de déplacement »."
-    : "Renseigne la distance pour calculer automatiquement les frais.";
+    ? "Aller-retour facturé : " + kmFactures + " km × " + euro(tarif) + " = "
+      + euro(calcule)
+      + (calcule < DEPLACEMENT_MINIMUM
+          ? " — relevé au minimum de " + euro(DEPLACEMENT_MINIMUM) + "."
+          : " — reporté sur la ligne « Frais de déplacement ».")
+    : "Minimum facturé : " + euro(DEPLACEMENT_MINIMUM)
+      + ". Renseigne la distance pour calculer les frais réels.";
   if (km > 0) {
     el("prix_pre2").value = montantDep;
     if ((parseFloat(el("qte_pre2").value) || 0) === 0) el("qte_pre2").value = 1;
