@@ -10,10 +10,8 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="theme-color" content="#E4671C">
 <meta name="apple-mobile-web-app-title" content="Devis APE">
-<!-- Volontairement PAS de mode plein écran (« apple-mobile-web-app-capable ») :
-     en mode application, iOS masque le bouton Partager, donc l'impression en PDF
-     devient impossible. L'icône ouvre l'outil dans Safari, barre d'outils
-     comprise, pour garder Partager → Imprimer. -->
+<!-- Volontairement PAS de mode plein écran : en mode application, iOS masque le
+     bouton Partager, donc l'impression en PDF devient impossible. -->
 <style>
   :root {
     --flame: #E4671C;
@@ -542,7 +540,6 @@ const CATALOGUE = [
     { ref: "pla2", nom: "Plateau de fromages italiens", unite: "6 pers.", prix: 40 }
   ]},
   { cat: "Pizzas", items: [
-    { ref: "piz0", nom: "Assortiment de pizzas du pizzaiolo", unite: "à la pizza", prix: 16 },
     { ref: "piz1", nom: "Pizza Margherita", unite: "à la pizza", prix: 14 },
     { ref: "piz3", nom: "Pizza Prosciutto", unite: "à la pizza", prix: 16 },
     { ref: "piz4", nom: "Pizza Mortadella", unite: "à la pizza", prix: 16 },
@@ -581,6 +578,20 @@ function construireCatalogue() {
     titre.textContent = groupe.cat;
     zone.appendChild(titre);
 
+    if (groupe.cat === "Pizzas") {
+      const barre = document.createElement("div");
+      barre.className = "actions";
+      barre.style.margin = "0 0 10px";
+      const bouton = document.createElement("button");
+      bouton.type = "button";
+      bouton.className = "secondaire";
+      bouton.id = "btn_toutes_pizzas";
+      bouton.textContent = "Tout sélectionner";
+      bouton.addEventListener("click", basculerToutesPizzas);
+      barre.appendChild(bouton);
+      zone.appendChild(barre);
+    }
+
     if (groupe.cat === "Desserts" || groupe.cat === "Entrées") {
       const note = document.createElement("p");
       note.className = "aide";
@@ -604,8 +615,7 @@ function construireCatalogue() {
         saisieNom.style.textAlign = "left";
         saisieNom.addEventListener("input", rafraichir);
         nom.appendChild(saisieNom);
-      } else if ((groupe.cat === "Pizzas" && article.ref !== "piz0")
-                 || groupe.cat === "Desserts" || groupe.cat === "Entrées") {
+      } else if (["Pizzas", "Desserts", "Entrées"].includes(groupe.cat)) {
         // Case à cocher : entrées et desserts se calculent seuls, les pizzas se
         // répartissent à partir du total.
         const etiquette = document.createElement("label");
@@ -742,10 +752,33 @@ function parVariete(objectif, varietes) {
   return Math.max(1, Math.round(objectif / varietes));
 }
 
+function toutesLesPizzas() {
+  return CATALOGUE.find(g => g.cat === "Pizzas").items;
+}
+
 function pizzasCochees() {
-  return CATALOGUE.find(g => g.cat === "Pizzas").items
-    .filter(a => a.ref !== "piz0")
+  return toutesLesPizzas()
     .filter(a => { const c = el("menu_" + a.ref); return c && c.checked; });
+}
+
+/* Un seul bouton pour les deux gestes : il coche tout, ou décoche tout si
+   l'ensemble est déjà sélectionné. Son libellé suit l'état courant. */
+function basculerToutesPizzas() {
+  const pizzas = toutesLesPizzas();
+  const toutCoche = pizzasCochees().length === pizzas.length;
+  pizzas.forEach(a => {
+    el("menu_" + a.ref).checked = !toutCoche;
+    if (toutCoche) el("qte_" + a.ref).value = 0;
+  });
+  synchroniserVarietes();
+  if (toutCoche) rafraichir(); else repartirPizzas();
+}
+
+function majBoutonPizzas() {
+  const total = toutesLesPizzas().length;
+  const cochees = pizzasCochees().length;
+  el("btn_toutes_pizzas").textContent =
+    cochees === total ? "Tout désélectionner" : "Tout sélectionner";
 }
 
 /* La case « Variétés au menu » suit le nombre de pizzas cochées, tant qu'il y en a. */
@@ -761,14 +794,11 @@ function repartirPizzas() {
   const cochees = pizzasCochees();
 
   if (cochees.length === 0) {
-    // Aucune variété choisie : tout part sur l'assortiment du pizzaiolo.
-    el("qte_piz0").value = total;
-    rafraichir();
+    rafraichir();   // rien de coché : l'encart invite à choisir les variétés
     return;
   }
-  el("qte_piz0").value = 0;
-  CATALOGUE.find(g => g.cat === "Pizzas").items
-    .filter(a => a.ref !== "piz0" && !cochees.includes(a))
+  toutesLesPizzas()
+    .filter(a => !cochees.includes(a))
     .forEach(a => { el("qte_" + a.ref).value = 0; });
   const parPizza = parVariete(total, cochees.length);
   cochees.forEach(article => { el("qte_" + article.ref).value = parPizza; });
@@ -821,7 +851,7 @@ function majEncartPizzas(convives) {
     (objectif !== conseil ? " Objectif retenu : " + objectif + "." : "") +
     "<div class=\"repartition\">" + detail + (cochees.length
       ? " Réparti sur les " + cochees.length + " variétés cochées ci-dessous."
-      : " Coche les variétés choisies, sinon tout ira sur l'assortiment du pizzaiolo.") +
+      : " Coche les variétés retenues, ou utilise « Tout sélectionner ».") +
     "</div>";
 }
 
@@ -990,6 +1020,7 @@ function rafraichir() {
     majDesserts(convives);
   }
   majEncartPizzas(convives);
+  majBoutonPizzas();
   majEncartEntrees(convives);
   majNoteDesserts(convives);
   majLienMaps();
@@ -1145,9 +1176,6 @@ function reinitialiser() {
 }
 
 /* ---------- fonctionnement hors connexion ---------- */
-/* Le service worker met l'outil en cache pour qu'il s'ouvre sans réseau, sur un
-   lieu de réception mal couvert par exemple. Il exige HTTPS : en ouvrant le
-   fichier en local (file://), l'enregistrement est simplement ignoré. */
 if ("serviceWorker" in navigator && location.protocol === "https:") {
   navigator.serviceWorker.register("sw.js").catch(() => {});
 }
