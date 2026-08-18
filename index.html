@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Devis — Atelier Pizza Event</title>
+
+<!-- Installation sur l'écran d'accueil ---------------------------------- -->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#E4671C">
+<meta name="apple-mobile-web-app-title" content="Devis APE">
+<!-- Volontairement PAS de mode plein écran (« apple-mobile-web-app-capable ») :
+     en mode application, iOS masque le bouton Partager, donc l'impression en PDF
+     devient impossible. L'icône ouvre l'outil dans Safari, barre d'outils
+     comprise, pour garder Partager → Imprimer. -->
+<style>
+  :root {
+    --flame: #E4671C;
+    --ember: #F7A768;
+    --dough: #FDF5EA;
+    --crust: #F5E3CB;
+    --ink:   #241A14;
+    --muted: #8A7768;
+    --rule:  #EBD9C2;
+    --basil: #566B3F;
+    --sans: "Poppins", "Century Gothic", "Futura", "Trebuchet MS", sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: #F3EEE7; color: var(--ink);
+    font-family: var(--sans); font-size: 15px; line-height: 1.5;
+  }
+  h1, h2, h3 { margin: 0; font-weight: 700; letter-spacing: -.01em; }
+
+  /* ================= SAISIE ================= */
+  .saisie { max-width: 820px; margin: 0 auto; padding: 24px 16px 48px; }
+  .saisie header { margin-bottom: 20px; }
+  .saisie header h1 { font-size: 24px; }
+  .saisie header p { color: var(--muted); margin: 4px 0 0; font-size: 14px; }
+
+  fieldset {
+    background: #fff; border: none; border-radius: 14px;
+    padding: 18px 18px 20px; margin: 0 0 16px;
+    box-shadow: 0 1px 2px rgba(36,26,20,.06), 0 8px 24px rgba(36,26,20,.05);
+  }
+  legend {
+    font-size: 11px; letter-spacing: .16em; text-transform: uppercase;
+    font-weight: 700; color: var(--flame); padding: 0 8px;
+    background: var(--dough); border-radius: 20px; margin-left: -4px;
+  }
+  .grille { display: grid; gap: 12px; grid-template-columns: repeat(2, 1fr); }
+  .grille.trois { grid-template-columns: repeat(3, 1fr); }
+  label.champ { display: block; }
+  label.champ span {
+    display: block; font-size: 11px; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--muted); font-weight: 700; margin-bottom: 4px;
+  }
+  input, textarea, select {
+    width: 100%; font: inherit; font-size: 15px; color: var(--ink);
+    padding: 9px 11px; border: 1px solid var(--rule); border-radius: 9px;
+    background: #fff; -webkit-appearance: none; appearance: none;
+  }
+  input:focus, textarea:focus, select:focus {
+    outline: 2px solid var(--ember); outline-offset: 1px; border-color: var(--ember);
+  }
+  textarea { min-height: 70px; resize: vertical; }
+
+  /* lignes catalogue */
+  .categorie {
+    font-size: 11px; letter-spacing: .16em; text-transform: uppercase;
+    font-weight: 700; color: #6B5A4B; background: var(--crust);
+    padding: 6px 10px; border-radius: 7px; margin: 16px 0 8px;
+  }
+  .categorie:first-of-type { margin-top: 4px; }
+  .article {
+    display: grid; grid-template-columns: 1fr 84px 92px 92px;
+    gap: 10px; align-items: center; padding: 6px 0;
+    border-bottom: 1px solid #F4EDE3;
+  }
+  .article:last-child { border-bottom: none; }
+  .article .nom { font-size: 14.5px; }
+  .article .nom small { display: block; color: var(--muted); font-size: 12px; }
+  .article input { text-align: right; padding: 7px 9px; }
+  .article .nom label.aumenu {
+    display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+  }
+  .article .nom input[type=checkbox] {
+    width: 18px; height: 18px; margin: 0; accent-color: var(--flame);
+    flex: none; -webkit-appearance: checkbox; appearance: checkbox;
+  }
+  .encart {
+    background: var(--dough); border-radius: 10px; padding: 12px 14px;
+    margin-top: 12px; font-size: 13.5px;
+  }
+  .encart strong { color: var(--ink); }
+  .sous-titre {
+    margin: 18px 0 10px; padding-top: 14px; border-top: 1px solid var(--rule);
+    font-size: 11px; letter-spacing: .16em; text-transform: uppercase;
+    font-weight: 700; color: var(--flame);
+  }
+  .encart .repartition {
+    margin-top: 6px; font-variant-numeric: tabular-nums; color: var(--muted);
+  }
+  .lien-externe { color: var(--flame); font-weight: 700; }
+  .article .total {
+    text-align: right; font-weight: 700; font-variant-numeric: tabular-nums;
+    color: var(--muted); font-size: 14px;
+  }
+  .article.actif .total { color: var(--ink); }
+  .entetes {
+    display: grid; grid-template-columns: 1fr 84px 92px 92px; gap: 10px;
+    font-size: 10px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--muted); font-weight: 700; padding-bottom: 4px;
+  }
+  .entetes span:not(:first-child) { text-align: right; }
+
+  /* barre de total collante */
+  .barre {
+    position: sticky; bottom: 0; z-index: 5; margin-top: 20px;
+    background: var(--ink); color: #fff; border-radius: 14px;
+    padding: 14px 18px; display: flex; align-items: center; gap: 14px;
+    flex-wrap: wrap; box-shadow: 0 8px 30px rgba(36,26,20,.25);
+  }
+  .barre .chiffre { font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .barre .libelle {
+    font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: #C9B8A8;
+  }
+  .barre .detail { font-size: 12.5px; color: #C9B8A8; }
+  .barre button { margin-left: auto; }
+  button {
+    font: inherit; font-weight: 700; font-size: 15px; cursor: pointer;
+    background: var(--flame); color: #fff; border: none;
+    border-radius: 10px; padding: 12px 22px; min-height: 46px;
+  }
+  button:hover { background: #C9560F; }
+  button.secondaire {
+    background: transparent; color: var(--ink); border: 1px solid var(--rule);
+  }
+  button.secondaire:hover { background: var(--dough); }
+  .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+  .aide {
+    font-size: 13px; color: var(--muted); margin-top: 10px; line-height: 1.5;
+  }
+
+  /* ================= DOCUMENT ================= */
+  .feuille {
+    max-width: 820px; margin: 24px auto 60px; background: #fff;
+    padding: 42px 46px; border-radius: 4px;
+    box-shadow: 0 2px 6px rgba(36,26,20,.08), 0 18px 50px rgba(36,26,20,.10);
+    font-size: 13px; line-height: 1.45;
+  }
+  .eyebrow {
+    font-size: 9.5px; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--muted); font-weight: 700;
+  }
+  .doc-entete { display: flex; gap: 20px; align-items: flex-start; margin-bottom: 22px; }
+  .doc-entete .marque { flex: 1; }
+  .doc-entete .marque .nom { font-size: 18px; }
+  .doc-entete .marque .baseline {
+    color: var(--flame); font-size: 10px; letter-spacing: .12em;
+    text-transform: uppercase; font-weight: 700; margin: 2px 0 8px;
+  }
+  .doc-entete .coordonnees { color: var(--muted); font-size: 11.5px; line-height: 1.45; }
+  .doc-entete .meta { text-align: right; }
+  .doc-entete .titre {
+    font-size: 36px; color: var(--flame); line-height: .95; font-weight: 700;
+  }
+  .doc-entete .numero { font-weight: 700; margin-top: 4px; }
+  .doc-entete .emission { color: var(--muted); font-size: 11.5px; }
+
+  .destinataire {
+    background: var(--dough); border-left: 4px solid var(--flame);
+    padding: 12px 16px; margin-bottom: 16px;
+  }
+  .destinataire .nom { font-size: 16px; font-weight: 700; margin: 2px 0 3px; }
+  .destinataire .contact { color: var(--muted); font-size: 12px; }
+
+  .ardoise {
+    display: flex; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule);
+    margin-bottom: 18px;
+  }
+  .ardoise .cellule { flex: 1; padding: 10px 14px 10px 0; }
+  .ardoise .cellule + .cellule { border-left: 1px solid var(--rule); padding-left: 14px; }
+  .ardoise .valeur { font-size: 15px; font-weight: 700; margin-top: 2px; }
+  .ardoise .precision { color: var(--flame); font-size: 10.5px; font-weight: 700; }
+
+  table.lignes { width: 100%; border-collapse: collapse; }
+  table.lignes th {
+    background: var(--flame); color: #fff; text-align: left;
+    font-size: 10px; letter-spacing: .14em; text-transform: uppercase;
+    padding: 8px 10px;
+  }
+  table.lignes th.num, table.lignes td.num {
+    text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap;
+  }
+  table.lignes td { padding: 6px 10px; border-bottom: 1px solid var(--rule); }
+  table.lignes tr.groupe td {
+    background: var(--crust); border-bottom: none; padding: 5px 10px;
+    font-size: 9.5px; letter-spacing: .16em; text-transform: uppercase;
+    font-weight: 700; color: #6B5A4B;
+  }
+  td .unite { color: var(--muted); font-size: 11px; }
+
+  .doc-bas { display: flex; gap: 26px; margin-top: 18px; }
+  .doc-bas .gauche { flex: 1.05; }
+  .doc-bas .droite { flex: 1; }
+  .conditions { font-size: 11px; color: var(--muted); line-height: 1.55; }
+  .conditions strong { color: var(--ink); }
+  .notes { background: var(--dough); padding: 10px 14px; margin-top: 12px; font-size: 11.5px; }
+  .notes ul { margin: 3px 0 0; padding-left: 16px; }
+
+  table.totaux { width: 100%; border-collapse: collapse; }
+  table.totaux td { padding: 4px 0; }
+  table.totaux td.libelle { color: var(--muted); }
+  table.totaux td.valeur {
+    text-align: right; font-weight: 700; font-variant-numeric: tabular-nums;
+  }
+  .pastille {
+    margin-top: 8px; background: var(--flame); color: #fff; border-radius: 26px;
+    padding: 11px 20px; display: flex; align-items: center; gap: 12px;
+  }
+  .pastille .label {
+    font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; font-weight: 700;
+  }
+  .pastille .montant {
+    margin-left: auto; font-size: 21px; font-weight: 700; font-variant-numeric: tabular-nums;
+  }
+  table.echeances { width: 100%; border-collapse: collapse; margin-top: 8px; }
+  table.echeances td { padding: 2px 0; font-size: 11.5px; color: var(--basil); }
+  table.echeances td.valeur {
+    text-align: right; font-weight: 700; font-variant-numeric: tabular-nums;
+  }
+  .signature {
+    margin-top: 14px; border: 1px dashed var(--ember); padding: 10px 13px; font-size: 11.5px;
+  }
+  .signature .consigne { color: var(--muted); margin: 2px 0 0; }
+  .signature .zone { height: 46px; }
+  .pied {
+    margin-top: 22px; padding-top: 10px; border-top: 1px solid var(--rule);
+    text-align: center; color: var(--muted); font-size: 10px;
+  }
+
+  @media (max-width: 640px) {
+    .grille, .grille.trois { grid-template-columns: 1fr; }
+    .article, .entetes { grid-template-columns: 1fr 68px 78px; }
+    .article .total, .entetes span:last-child { display: none; }
+    .feuille { padding: 22px 18px; margin: 16px 8px 40px; }
+    .doc-entete, .doc-bas { flex-direction: column; }
+    .doc-entete .meta { text-align: left; }
+    .ardoise { flex-wrap: wrap; }
+    .ardoise .cellule { flex: 1 1 45%; }
+    .barre button { margin-left: 0; width: 100%; }
+  }
+
+  /* ================= IMPRESSION ================= */
+  @media print {
+    @page { size: A4; margin: 0; }
+    body { background: #fff; font-size: 10pt; }
+    /* Sans cette règle, Chrome imprime la bande orange et la pastille en blanc :
+       l'option « Graphiques d'arrière-plan » est désactivée par défaut. */
+    .feuille, .feuille * {
+      -webkit-print-color-adjust: exact; print-color-adjust: exact;
+    }
+    .saisie, .no-print { display: none !important; }
+    .feuille {
+      max-width: none; margin: 0; box-shadow: none;
+      border-radius: 0; font-size: 9.5pt;
+      /* Les marges d'impression sont portées par le document lui-même,
+         puisque @page est à zéro. */
+      padding: 13mm 13mm 12mm;
+    }
+    table.lignes thead { display: table-header-group; }
+    table.lignes tr, .signature, .doc-bas { break-inside: avoid; }
+    .doc-entete .titre { font-size: 26pt; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ==================== FORMULAIRE ==================== -->
+<div class="saisie">
+  <header>
+    <h1>Générateur de devis</h1>
+    <p>Remplis, vérifie l'aperçu en bas de page, puis enregistre en PDF.</p>
+  </header>
+
+  <fieldset>
+    <legend>Client</legend>
+    <div class="grille">
+      <label class="champ"><span>Nom du client</span>
+        <input id="cli_nom" type="text" placeholder="MARTIN Lola"></label>
+      <label class="champ"><span>Téléphone</span>
+        <input id="cli_tel" type="tel" placeholder="06 12 34 56 78"></label>
+      <label class="champ"><span>E-mail</span>
+        <input id="cli_mail" type="email" placeholder="prenom.nom@mail.fr"></label>
+      <label class="champ"><span>Adresse du lieu</span>
+        <input id="cli_adresse" type="text" placeholder="Chemin de la Bruyère"></label>
+      <label class="champ"><span>Code postal</span>
+        <input id="cli_cp" type="text" inputmode="numeric" placeholder="42100"></label>
+      <label class="champ"><span>Ville</span>
+        <input id="cli_ville" type="text" placeholder="Saint-Étienne"></label>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Évènement</legend>
+    <div class="grille trois">
+      <label class="champ"><span>Type</span>
+        <input id="ev_type" type="text" list="types" value="Mariage">
+        <datalist id="types">
+          <option>Mariage</option><option>Brunch mariage</option><option>Anniversaire</option>
+          <option>Pizza Party</option><option>Baptême</option><option>Évènement professionnel</option>
+        </datalist>
+      </label>
+      <label class="champ"><span>Date</span>
+        <input id="ev_date" type="date"></label>
+      <label class="champ"><span>Service</span>
+        <select id="ev_service"><option>Soir</option><option>Midi</option></select></label>
+      <label class="champ"><span>Convives</span>
+        <input id="ev_convives" type="number" min="1" step="5" value="60"></label>
+      <label class="champ"><span>Type de client</span>
+        <select id="ev_client"><option>Particulier</option><option>Professionnel</option></select></label>
+      <label class="champ"><span>Date du devis</span>
+        <input id="ev_emission" type="date"></label>
+    </div>
+    <p class="aide" id="suggestion"></p>
+  </fieldset>
+
+  <fieldset>
+    <legend>Prestations</legend>
+    <div class="entetes">
+      <span>Article</span><span>Qté</span><span>Prix unit.</span><span>Montant</span>
+    </div>
+    <div id="catalogue"></div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Assortiment</legend>
+    <div class="grille trois">
+      <label class="champ"><span>Total de pizzas</span>
+        <input id="piz_total" type="number" min="0" step="1" value="50"></label>
+      <label class="champ"><span>Variétés au menu</span>
+        <input id="piz_varietes" type="number" min="1" step="1" value="8"></label>
+      <label class="champ" style="align-self:end">
+        <button type="button" onclick="calculAutomatique()"
+                style="width:100%">Calcul automatique</button></label>
+    </div>
+    <div class="encart" id="encart_pizzas"></div>
+    <div class="encart" id="encart_entrees"></div>
+
+    <div class="sous-titre">Déplacement</div>
+    <div class="actions" style="margin:0 0 12px">
+      <button type="button" class="secondaire" id="btn_trajet"
+              onclick="calculerTrajet()">Calculer le trajet depuis Saint-Étienne</button>
+      <a id="lien_maps" class="lien-externe" style="align-self:center" target="_blank"
+         rel="noopener" href="#">Ouvrir dans Google Maps</a>
+    </div>
+    <p class="aide" id="resultat_trajet">
+      Renseigne la ville et le code postal du client, puis lance le calcul :
+      la distance et les frais se remplissent automatiquement.
+    </p>
+    <div class="grille trois">
+      <label class="champ"><span>Distance aller (km)</span>
+        <input id="dep_km" type="number" min="0" step="10" value="0"></label>
+      <label class="champ"><span>Tarif au km (€)</span>
+        <input id="dep_tarif" type="number" min="0" step="0.10" value="2"></label>
+      <label class="champ"><span>Km offerts</span>
+        <input id="dep_franchise" type="number" min="0" step="5" value="0"></label>
+    </div>
+    <p class="aide" id="calcul_deplacement"></p>
+  </fieldset>
+
+  <fieldset>
+    <legend>Remise et acompte</legend>
+    <div class="grille">
+      <label class="champ"><span>Remise commerciale (€)</span>
+        <input id="remise" type="number" min="0" step="10" value="0"></label>
+      <label class="champ"><span>Acompte (%)</span>
+        <input id="acompte" type="number" min="0" max="100" step="5" value="50"></label>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Précisions</legend>
+    <label class="champ"><span>Une par ligne, reprises sur le devis</span>
+      <textarea id="notes" placeholder="Tiramisu sans alcool&#10;3 pizzas sans gluten&#10;Prévoir un accès électrique 16 A"></textarea></label>
+  </fieldset>
+
+  <div class="barre">
+    <div>
+      <div class="libelle">Total à régler</div>
+      <div class="chiffre" id="barre_total">0,00 €</div>
+      <div class="detail" id="barre_detail"></div>
+      <div class="detail" id="nom_fichier"></div>
+    </div>
+    <button type="button" onclick="window.print()">Enregistrer en PDF</button>
+  </div>
+
+  <div class="actions">
+    <button type="button" class="secondaire" onclick="reinitialiser()">Nouveau devis</button>
+  </div>
+  <p class="aide">
+    « Enregistrer en PDF » ouvre la fenêtre d'impression : choisis
+    <strong>Destination → Enregistrer au format PDF</strong>, puis Enregistrer. Le nom du
+    fichier est déjà proposé au bon format et part dans ton dossier Téléchargements.
+    Sur iPhone, bouton Partager puis Imprimer, et pince pour agrandir l'aperçu afin de
+    l'enregistrer dans Fichiers. Si l'adresse du fichier ou la date apparaissent encore
+    en haut ou en bas de la page, décoche « En-têtes et pieds de page » dans les
+    options d'impression.
+    Rien n'est envoyé sur internet : tout se passe dans ton navigateur.
+  </p>
+</div>
+
+<!-- ==================== DOCUMENT ==================== -->
+<div class="feuille" id="feuille">
+  <div class="doc-entete">
+    <div class="marque">
+      <div class="nom">Atelier Pizza Event</div>
+      <div class="baseline">L'Italie chez vous !</div>
+      <div class="coordonnees">
+        7 rue Alleon Dulac<br>
+        42100 Saint-Étienne<br>
+        06 59 16 02 66 · contact@atelierpizzaevent.fr
+      </div>
+    </div>
+    <div class="meta">
+      <div class="titre">Devis</div>
+      <div class="numero" id="d_numero">N° —</div>
+      <div class="emission" id="d_dates"></div>
+    </div>
+  </div>
+
+  <div class="destinataire">
+    <span class="eyebrow">Client</span>
+    <div class="nom" id="d_nom">—</div>
+    <div class="contact" id="d_contact"></div>
+  </div>
+
+  <div class="ardoise">
+    <div class="cellule">
+      <span class="eyebrow">Évènement</span>
+      <div class="valeur" id="d_type">—</div>
+      <span class="precision" id="d_typeclient"></span>
+    </div>
+    <div class="cellule">
+      <span class="eyebrow">Date</span>
+      <div class="valeur" id="d_date">—</div>
+      <span class="precision" id="d_quand"></span>
+    </div>
+    <div class="cellule">
+      <span class="eyebrow">Service</span>
+      <div class="valeur" id="d_service">—</div>
+      <span class="precision" id="d_lieu"></span>
+    </div>
+    <div class="cellule">
+      <span class="eyebrow">Convives</span>
+      <div class="valeur" id="d_convives">—</div>
+      <span class="precision" id="d_pizzas"></span>
+    </div>
+  </div>
+
+  <table class="lignes">
+    <thead>
+      <tr>
+        <th>Désignation</th>
+        <th class="num">Qté</th>
+        <th class="num">Prix unit.</th>
+        <th class="num">Montant</th>
+      </tr>
+    </thead>
+    <tbody id="d_lignes"></tbody>
+  </table>
+
+  <div class="doc-bas">
+    <div class="gauche">
+      <span class="eyebrow">Conditions</span>
+      <p class="conditions">
+        Devis valable 30 jours à compter de sa date d'émission. À la validation du
+        devis, un acompte <span id="d_taux_acompte">de 50 %</span> du montant total est
+        demandé ; il confirme la réservation de la date. Le solde est réglé le jour
+        de la prestation.<br>
+        <strong>Règlement :</strong> virement bancaire ou espèces<br>
+        <strong>TVA non applicable, article 293 B du CGI</strong>
+      </p>
+      <div class="notes" id="d_notes" hidden>
+        <span class="eyebrow">Précisions</span>
+        <ul id="d_notes_liste"></ul>
+      </div>
+    </div>
+    <div class="droite">
+      <table class="totaux">
+        <tr id="d_ligne_soustotal" hidden>
+          <td class="libelle">Sous-total</td>
+          <td class="valeur" id="d_soustotal"></td>
+        </tr>
+        <tr id="d_ligne_remise" hidden>
+          <td class="libelle">Remise commerciale</td>
+          <td class="valeur" id="d_remise"></td>
+        </tr>
+      </table>
+      <div class="pastille">
+        <span class="label">Total à régler</span>
+        <span class="montant" id="d_total">0,00 €</span>
+      </div>
+      <table class="echeances">
+        <tr>
+          <td id="d_libelle_acompte">Acompte à la réservation</td>
+          <td class="valeur" id="d_acompte"></td>
+        </tr>
+        <tr>
+          <td>Solde le jour de la prestation</td>
+          <td class="valeur" id="d_solde"></td>
+        </tr>
+      </table>
+      <div class="signature">
+        <span class="eyebrow">Bon pour accord</span>
+        <p class="consigne">Date et signature, précédées de « Lu et approuvé »</p>
+        <div class="zone"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pied">
+    SIRET 918 194 671 00015 · 06 59 16 02 66 · www.atelierpizzaevent.fr
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   CATALOGUE — modifie librement les prix et les libellés ici.
+   ============================================================ */
+const CATALOGUE = [
+  { cat: "Entrées", items: [
+    { ref: "bro1", nom: "Brochettes tomate · mozzarella · basilic", unite: "plateau de 10", prix: 20 },
+    { ref: "bro2", nom: "Brochettes melon · mozzarella · jambon cru", unite: "plateau de 10", prix: 25 },
+    { ref: "bru1", nom: "Bruschetta tomate · mozzarella · basilic", unite: "plateau de 10", prix: 30 },
+    { ref: "bru2", nom: "Bruschetta gorgonzola · speck · noix · miel", unite: "plateau de 10", prix: 35 },
+    { ref: "bru3", nom: "Bruschetta ricotta · saumon · citron · herbes", unite: "plateau de 10", prix: 35 },
+    { ref: "bru4", nom: "Bruschetta houmous à l'italienne", unite: "plateau de 10", prix: 35 },
+    { ref: "pla1", nom: "Plateau de charcuteries italiennes", unite: "6 pers.", prix: 40 },
+    { ref: "pla2", nom: "Plateau de fromages italiens", unite: "6 pers.", prix: 40 }
+  ]},
+  { cat: "Pizzas", items: [
+    { ref: "piz0", nom: "Assortiment de pizzas du pizzaiolo", unite: "à la pizza", prix: 16 },
+    { ref: "piz1", nom: "Pizza Margherita", unite: "à la pizza", prix: 14 },
+    { ref: "piz3", nom: "Pizza Prosciutto", unite: "à la pizza", prix: 16 },
+    { ref: "piz4", nom: "Pizza Mortadella", unite: "à la pizza", prix: 16 },
+    { ref: "piz5", nom: "Pizza Burrata", unite: "à la pizza", prix: 16 },
+    { ref: "piz2", nom: "Pizza Vegetariana", unite: "à la pizza", prix: 16 },
+    { ref: "piz6", nom: "Pizza Quattro formaggi", unite: "à la pizza", prix: 16 },
+    { ref: "piz7", nom: "Pizza Chorizo", unite: "à la pizza", prix: 16 },
+    { ref: "piz8", nom: "Pizza Salmone", unite: "à la pizza", prix: 17 }
+  ]},
+  { cat: "Desserts", items: [
+    { ref: "des1", nom: "Tiramisu maison", unite: "plateau de 10", prix: 40 },
+    { ref: "des2", nom: "Cannoli siciliens", unite: "plateau de 10", prix: 20 }
+  ]},
+  { cat: "Prestation", items: [
+    { ref: "pre1", nom: "Forfait privatisation (installation, service, matériel, buffet, décoration)",
+      unite: "forfait", prix: 1000, qteDefaut: 1 },
+    { ref: "pre2", nom: "Frais de déplacement", unite: "forfait", prix: 0, qteDefaut: 1 },
+    { ref: "pre3", nom: "Autre prestation", unite: "", prix: 0, libre: true },
+    { ref: "pre4", nom: "Autre prestation", unite: "", prix: 0, libre: true }
+  ]}
+];
+
+const MOIS = ["janvier","février","mars","avril","mai","juin",
+              "juillet","août","septembre","octobre","novembre","décembre"];
+
+const euro = v => (v || 0).toLocaleString("fr-FR",
+  { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
+const el = id => document.getElementById(id);
+
+/* ---------- construction des lignes de saisie ---------- */
+function construireCatalogue() {
+  const zone = el("catalogue");
+  CATALOGUE.forEach(groupe => {
+    const titre = document.createElement("div");
+    titre.className = "categorie";
+    titre.textContent = groupe.cat;
+    zone.appendChild(titre);
+
+    if (groupe.cat === "Desserts" || groupe.cat === "Entrées") {
+      const note = document.createElement("p");
+      note.className = "aide";
+      note.id = groupe.cat === "Desserts" ? "note_desserts" : "note_entrees";
+      note.style.margin = "0 0 8px";
+      zone.appendChild(note);
+    }
+
+    groupe.items.forEach(article => {
+      const ligne = document.createElement("div");
+      ligne.className = "article";
+      ligne.id = "ligne_" + article.ref;
+
+      const nom = document.createElement("div");
+      nom.className = "nom";
+      if (article.libre) {
+        const saisieNom = document.createElement("input");
+        saisieNom.type = "text";
+        saisieNom.id = "nom_" + article.ref;
+        saisieNom.placeholder = "Prestation sur mesure";
+        saisieNom.style.textAlign = "left";
+        saisieNom.addEventListener("input", rafraichir);
+        nom.appendChild(saisieNom);
+      } else if ((groupe.cat === "Pizzas" && article.ref !== "piz0")
+                 || groupe.cat === "Desserts" || groupe.cat === "Entrées") {
+        // Case à cocher : entrées et desserts se calculent seuls, les pizzas se
+        // répartissent à partir du total.
+        const etiquette = document.createElement("label");
+        etiquette.className = "aumenu";
+        const coche = document.createElement("input");
+        coche.type = "checkbox";
+        coche.id = "menu_" + article.ref;
+        coche.addEventListener("change", () => {
+          const convives = parseInt(el("ev_convives").value) || 0;
+          if (!coche.checked) el("qte_" + article.ref).value = 0;
+          if (groupe.cat === "Entrées") {
+            majEntrees(convives);          // le nombre de cochées change les quantités
+          } else if (groupe.cat === "Desserts" && coche.checked) {
+            el("qte_" + article.ref).value = plateauxDesserts(convives);
+          }
+          synchroniserVarietes();
+          rafraichir();
+        });
+        const texte = document.createElement("span");
+        texte.innerHTML = article.nom + "<small>" + article.unite + "</small>";
+        etiquette.append(coche, texte);
+        nom.appendChild(etiquette);
+      } else {
+        nom.innerHTML = article.nom + (article.unite
+          ? "<small>" + article.unite + "</small>" : "");
+      }
+
+      const qte = document.createElement("input");
+      qte.type = "number"; qte.min = "0"; qte.step = "1";
+      qte.value = article.qteDefaut || 0;
+      qte.id = "qte_" + article.ref;
+      qte.setAttribute("aria-label", "Quantité " + article.nom);
+      qte.addEventListener("input", rafraichir);
+
+      const prix = document.createElement("input");
+      prix.type = "number"; prix.min = "0"; prix.step = "0.5";
+      prix.value = article.prix;
+      prix.id = "prix_" + article.ref;
+      prix.setAttribute("aria-label", "Prix " + article.nom);
+      prix.addEventListener("input", rafraichir);
+
+      const total = document.createElement("div");
+      total.className = "total";
+      total.id = "tot_" + article.ref;
+      total.textContent = "—";
+
+      ligne.append(nom, qte, prix, total);
+      zone.appendChild(ligne);
+    });
+  });
+}
+
+/* ---------- lecture de l'état ---------- */
+function lireLignes() {
+  const retenues = [];
+  CATALOGUE.forEach(groupe => {
+    groupe.items.forEach(article => {
+      const qte = parseFloat(el("qte_" + article.ref).value) || 0;
+      const prix = parseFloat(el("prix_" + article.ref).value) || 0;
+      const montant = qte * prix;
+      const champNom = el("nom_" + article.ref);
+      const designation = champNom && champNom.value.trim()
+        ? champNom.value.trim() : article.nom;
+
+      el("tot_" + article.ref).textContent = qte > 0 ? euro(montant) : "—";
+      el("ligne_" + article.ref).classList.toggle("actif", qte > 0);
+
+      // Le forfait et le déplacement restent actifs dans le formulaire, mais une
+      // ligne à 0 € n'a pas à figurer sur le devis envoyé au client.
+      if (qte > 0 && montant > 0) {
+        retenues.push({
+          cat: groupe.cat, nom: designation, unite: article.unite,
+          qte, prix, montant
+        });
+      }
+    });
+  });
+  return retenues;
+}
+
+function dateFr(valeur) {
+  if (!valeur) return "à définir";
+  const [a, m, j] = valeur.split("-").map(Number);
+  return j + " " + MOIS[m - 1] + " " + a;
+}
+
+function compteARebours(valeur) {
+  if (!valeur) return "";
+  const cible = new Date(valeur + "T12:00:00");
+  const jours = Math.round((cible - new Date()) / 86400000);
+  if (jours < 0) return "date passée";
+  if (jours === 0) return "aujourd'hui";
+  if (jours < 31) return "dans " + jours + " jour" + (jours > 1 ? "s" : "");
+  return "dans " + Math.round(jours / 30.44) + " mois";
+}
+
+/* ---------- calcul et répartition des pizzas ---------- */
+
+/* Règle maison, par tranche de convives :
+     jusqu'à 50 convives  → convives − 5
+     de 51 à 100          → convives − 10
+     de 101 à 200         → convives − 20
+   Au-delà de 200, les trois paliers correspondent à 90 % des convives à leur
+   borne haute : la règle est prolongée ainsi. */
+function formuleTranche(convives) {
+  if (convives <= 50) return convives - 5;
+  if (convives <= 100) return convives - 10;
+  if (convives <= 200) return convives - 20;
+  return Math.round(convives * 0.9);
+}
+
+/* Aux frontières, la formule du palier suivant donnerait moins de pizzas que
+   le palier précédent (51 convives → 41, alors que 50 convives → 45). On
+   conserve donc la valeur atteinte en haut du palier précédent : le nombre de
+   pizzas ne peut jamais baisser quand le nombre de convives augmente. */
+function plancherTranche(convives) {
+  let plancher = 0;
+  if (convives > 50) plancher = Math.max(plancher, formuleTranche(50));
+  if (convives > 100) plancher = Math.max(plancher, formuleTranche(100));
+  if (convives > 200) plancher = Math.max(plancher, formuleTranche(200));
+  return plancher;
+}
+
+function totalPizzasConseille(convives) {
+  if (convives <= 0) return 0;
+  return Math.max(1, formuleTranche(convives), plancherTranche(convives));
+}
+
+/* Toutes les variétés doivent avoir la même quantité : on retient le multiple
+   du nombre de variétés le plus proche de l'objectif (à égalité, on arrondit
+   vers le haut plutôt que de servir trop peu). */
+function parVariete(objectif, varietes) {
+  if (varietes < 1) return 0;
+  return Math.max(1, Math.round(objectif / varietes));
+}
+
+function pizzasCochees() {
+  return CATALOGUE.find(g => g.cat === "Pizzas").items
+    .filter(a => a.ref !== "piz0")
+    .filter(a => { const c = el("menu_" + a.ref); return c && c.checked; });
+}
+
+/* La case « Variétés au menu » suit le nombre de pizzas cochées, tant qu'il y en a. */
+function synchroniserVarietes() {
+  const cochees = pizzasCochees().length;
+  if (cochees > 0) el("piz_varietes").value = cochees;
+}
+
+
+
+function repartirPizzas() {
+  const total = parseInt(el("piz_total").value) || 0;
+  const cochees = pizzasCochees();
+
+  if (cochees.length === 0) {
+    // Aucune variété choisie : tout part sur l'assortiment du pizzaiolo.
+    el("qte_piz0").value = total;
+    rafraichir();
+    return;
+  }
+  el("qte_piz0").value = 0;
+  CATALOGUE.find(g => g.cat === "Pizzas").items
+    .filter(a => a.ref !== "piz0" && !cochees.includes(a))
+    .forEach(a => { el("qte_" + a.ref).value = 0; });
+  const parPizza = parVariete(total, cochees.length);
+  cochees.forEach(article => { el("qte_" + article.ref).value = parPizza; });
+  rafraichir();
+}
+
+function libelleTranche(convives) {
+  let regle;
+  if (convives <= 50) regle = "jusqu'à 50 convives : convives − 5";
+  else if (convives <= 100) regle = "de 51 à 100 convives : convives − 10";
+  else if (convives <= 200) regle = "de 101 à 200 convives : convives − 20";
+  else regle = "au-delà de 200 convives : 90 % des convives";
+
+  if (plancherTranche(convives) > formuleTranche(convives)) {
+    regle += ", relevé au palier précédent";
+  }
+  return regle;
+}
+
+/* Bouton « Calcul automatique » : entrées, pizzas et desserts d'un coup. */
+function calculAutomatique() {
+  const convives = parseInt(el("ev_convives").value) || 0;
+  majEntrees(convives);
+  majDesserts(convives);
+  repartirPizzas();   // termine par rafraichir()
+}
+
+function majEncartPizzas(convives) {
+  const conseil = totalPizzasConseille(convives);
+  const objectif = parseInt(el("piz_total").value) || 0;
+  const varietes = Math.max(1, parseInt(el("piz_varietes").value) || 1);
+  const cochees = pizzasCochees();
+  const parPizza = parVariete(objectif, varietes);
+  const servi = parPizza * varietes;
+  const ecart = servi - objectif;
+
+  let detail;
+  if (ecart === 0) {
+    detail = objectif + " ÷ " + varietes + " = <strong>" + parPizza +
+      " pizzas par variété</strong>, soit exactement l'objectif.";
+  } else {
+    detail = objectif + " n'est pas divisible par " + varietes +
+      " : <strong>" + parPizza + " pizzas par variété</strong>, soit " + servi +
+      " au total (" + (ecart > 0 ? "+" : "") + ecart + ").";
+  }
+
+  el("encart_pizzas").innerHTML =
+    "<strong>" + convives + " convives → " + conseil + " pizzas</strong> (" +
+    libelleTranche(convives) + ")." +
+    (objectif !== conseil ? " Objectif retenu : " + objectif + "." : "") +
+    "<div class=\"repartition\">" + detail + (cochees.length
+      ? " Réparti sur les " + cochees.length + " variétés cochées ci-dessous."
+      : " Coche les variétés choisies, sinon tout ira sur l'assortiment du pizzaiolo.") +
+    "</div>";
+}
+
+/* ---------- entrées : quantité par famille ---------- */
+
+/* Chaque famille se partage la couverture des convives :
+     brochettes et bruschette → plateaux de 10
+     plateaux charcuterie / fromages → 8 parts
+   Quantité par assortiment coché = convives ÷ nombre d'assortiments cochés
+   ÷ contenance, arrondi à l'entier supérieur. */
+const FAMILLES_ENTREES = [
+  { nom: "Brochettes", refs: ["bro1", "bro2"], contenance: 10 },
+  { nom: "Bruschetta", refs: ["bru1", "bru2", "bru3", "bru4"], contenance: 10 },
+  { nom: "Plateaux", refs: ["pla1", "pla2"], contenance: 8 }
+];
+
+function refsCochees(refs) {
+  return refs.filter(ref => { const c = el("menu_" + ref); return c && c.checked; });
+}
+
+function quantiteEntree(convives, nbCoches, contenance) {
+  if (nbCoches < 1) return 0;
+  return Math.ceil(convives / nbCoches / contenance);
+}
+
+function majEntrees(convives) {
+  FAMILLES_ENTREES.forEach(famille => {
+    const cochees = refsCochees(famille.refs);
+    const quantite = quantiteEntree(convives, cochees.length, famille.contenance);
+    cochees.forEach(ref => { el("qte_" + ref).value = quantite; });
+  });
+}
+
+function detailEntrees(convives) {
+  return FAMILLES_ENTREES.map(famille => {
+    const cochees = refsCochees(famille.refs);
+    if (!cochees.length) return famille.nom + " : aucun assortiment coché";
+    const quantite = quantiteEntree(convives, cochees.length, famille.contenance);
+    return famille.nom + " : " + convives + " ÷ " + cochees.length + " ÷ "
+      + famille.contenance + " → <strong>" + quantite + "</strong> par assortiment"
+      + " (" + cochees.length + " coché" + (cochees.length > 1 ? "s" : "") + ")";
+  });
+}
+
+function majEncartEntrees(convives) {
+  el("encart_entrees").innerHTML = "<strong>Entrées</strong>"
+    + "<div class=\"repartition\">" + detailEntrees(convives).join("<br>") + "</div>";
+  const total = FAMILLES_ENTREES.reduce((s, f) => s + refsCochees(f.refs).length, 0);
+  el("note_entrees").textContent = total
+    ? "Quantités calculées automatiquement : voir le bloc Assortiment plus bas."
+    : "Coche les assortiments retenus : les quantités se calculent seules "
+      + "d'après le nombre de convives.";
+}
+
+/* ---------- desserts : un par convive ---------- */
+
+/* Les desserts se vendent par plateau de 10 : un dessert par convive revient
+   donc à arrondir convives / 10 au plateau supérieur. Chaque dessert coché
+   reçoit cette quantité (65 convives et deux desserts au menu = 7 plateaux de
+   tiramisu et 7 plateaux de cannoli, soit un choix pour chacun). */
+function plateauxDesserts(convives) {
+  return Math.ceil(convives / 10);
+}
+
+function dessertsCoches() {
+  return CATALOGUE.find(g => g.cat === "Desserts").items
+    .filter(a => { const c = el("menu_" + a.ref); return c && c.checked; });
+}
+
+function majDesserts(convives) {
+  const plateaux = plateauxDesserts(convives);
+  dessertsCoches().forEach(a => { el("qte_" + a.ref).value = plateaux; });
+}
+
+function majNoteDesserts(convives) {
+  const coches = dessertsCoches();
+  const plateaux = plateauxDesserts(convives);
+  el("note_desserts").textContent = coches.length
+    ? convives + " convives ÷ 10 = " + plateaux + " plateaux par dessert coché ("
+      + plateaux * 10 + " parts), pour un dessert par personne."
+    : "Coche un dessert : sa quantité suit automatiquement le nombre de convives "
+      + "(" + plateaux + " plateaux pour " + convives + " convives).";
+}
+
+/* ---------- itinéraire (OpenStreetMap, sans clé d'API) ---------- */
+
+async function geocoder(recherche) {
+  const url = "https://nominatim.openstreetmap.org/search?format=json&limit=1&q="
+            + encodeURIComponent(recherche);
+  const reponse = await fetch(url, { headers: { "Accept-Language": "fr" } });
+  if (!reponse.ok) throw new Error("géocodage indisponible");
+  const resultats = await reponse.json();
+  if (!resultats.length) throw new Error("commune introuvable");
+  return { lat: resultats[0].lat, lon: resultats[0].lon, nom: resultats[0].display_name };
+}
+
+function dureeLisible(minutes) {
+  if (minutes < 60) return minutes + " min";
+  const h = Math.floor(minutes / 60), m = minutes % 60;
+  return h + " h" + (m ? " " + String(m).padStart(2, "0") : "");
+}
+
+function majLienMaps() {
+  const destination = [el("cli_cp").value.trim(), el("cli_ville").value.trim()]
+    .filter(Boolean).join(" ");
+  el("lien_maps").href = "https://www.google.com/maps/dir/?api=1&origin="
+    + encodeURIComponent("42100 Saint-Étienne")
+    + "&destination=" + encodeURIComponent(destination + " France");
+  el("lien_maps").hidden = !destination;
+}
+
+async function calculerTrajet() {
+  const destination = [el("cli_cp").value.trim(), el("cli_ville").value.trim()]
+    .filter(Boolean).join(" ");
+  const zone = el("resultat_trajet");
+  const bouton = el("btn_trajet");
+
+  if (!destination) {
+    zone.textContent = "Renseigne d'abord la ville ou le code postal du client.";
+    return;
+  }
+  bouton.disabled = true;
+  zone.textContent = "Recherche de l'itinéraire…";
+
+  try {
+    const depart = await geocoder("42100 Saint-Étienne, France");
+    const arrivee = await geocoder(destination + ", France");
+    const url = "https://router.project-osrm.org/route/v1/driving/"
+      + depart.lon + "," + depart.lat + ";" + arrivee.lon + "," + arrivee.lat
+      + "?overview=false";
+    const reponse = await fetch(url);
+    if (!reponse.ok) throw new Error("service d'itinéraire indisponible");
+    const donnees = await reponse.json();
+    if (donnees.code !== "Ok" || !donnees.routes || !donnees.routes.length) {
+      throw new Error("aucun itinéraire routier trouvé");
+    }
+    const km = Math.round(donnees.routes[0].distance / 1000);
+    const minutes = Math.round(donnees.routes[0].duration / 60);
+
+    el("dep_km").value = km;
+    zone.innerHTML = "<strong>" + arrivee.nom.split(",")[0] + "</strong> : "
+      + km + " km, environ " + dureeLisible(minutes) + " de route à l'aller ("
+      + dureeLisible(minutes * 2) + " aller-retour). Distance et frais reportés ci-dessous.";
+    rafraichir();
+  } catch (erreur) {
+    zone.innerHTML = "Calcul impossible (" + erreur.message
+      + "). Utilise le lien Google Maps et saisis la distance à la main.";
+  } finally {
+    bouton.disabled = false;
+  }
+}
+
+/* ---------- rendu du document ---------- */
+let dernierConvives = null;
+
+function rafraichir() {
+  const lignes = lireLignes();
+  const convives = parseInt(el("ev_convives").value) || 0;
+
+  /* Le total conseillé se recalcule quand le nombre de convives bouge ;
+     ensuite il reste modifiable à la main sans être écrasé. */
+  if (convives !== dernierConvives) {
+    dernierConvives = convives;
+    el("piz_total").value = totalPizzasConseille(convives);
+    majEntrees(convives);
+    majDesserts(convives);
+  }
+  majEncartPizzas(convives);
+  majEncartEntrees(convives);
+  majNoteDesserts(convives);
+  majLienMaps();
+
+  /* frais de déplacement calculés */
+  const km = parseFloat(el("dep_km").value) || 0;
+  const tarif = parseFloat(el("dep_tarif").value) || 0;
+  const franchise = parseFloat(el("dep_franchise").value) || 0;
+  const montantDep = Math.round(Math.max(0, km - franchise) * 2 * tarif * 100) / 100;
+  el("calcul_deplacement").textContent = km > 0
+    ? "Aller-retour facturé : " + Math.max(0, km - franchise) * 2 + " km × "
+      + euro(tarif) + " = " + euro(montantDep) + " — reporté sur la ligne « Frais de déplacement »."
+    : "Renseigne la distance pour calculer automatiquement les frais.";
+  if (km > 0) {
+    el("prix_pre2").value = montantDep;
+    if ((parseFloat(el("qte_pre2").value) || 0) === 0) el("qte_pre2").value = 1;
+  }
+
+  const lignesFinales = km > 0 ? lireLignes() : lignes;
+
+  /* totaux */
+  const sousTotal = lignesFinales.reduce((s, l) => s + l.montant, 0);
+  const remise = Math.min(parseFloat(el("remise").value) || 0, sousTotal);
+  const total = sousTotal - remise;
+  const tauxAcompte = (parseFloat(el("acompte").value) || 0) / 100;
+  const acompte = Math.round(total * tauxAcompte * 100) / 100;
+
+  el("barre_total").textContent = euro(total);
+  const nbPizzas = lignesFinales
+    .filter(l => l.cat === "Pizzas").reduce((s, l) => s + l.qte, 0);
+  el("barre_detail").textContent = convives
+    ? nbPizzas + " pizzas · " + euro(total / convives) + " par convive"
+    : "";
+  el("suggestion").textContent = convives
+    ? "Repère : " + totalPizzasConseille(convives) + " pizzas et environ "
+      + Math.ceil(convives / 10) + " plateaux d'entrées pour " + convives + " convives."
+    : "";
+  el("piz_total").setAttribute("aria-describedby", "encart_pizzas");
+
+  /* en-tête du document */
+  const nom = el("cli_nom").value.trim();
+  const emission = el("ev_emission").value;
+  const dateEmission = emission ? new Date(emission + "T12:00:00") : new Date();
+
+  /* Le numéro reprend la date de l'ÉVÈNEMENT au format AAMMJJ (270403 pour le
+     3 avril 2027). Tant que la date n'est pas saisie, on retombe sur la date
+     du jour pour ne pas afficher un numéro vide. */
+  const dateReference = el("ev_date").value
+    || dateEmission.toISOString().slice(0, 10);
+  const aammjj = dateReference.slice(2).replace(/-/g, "");
+  const nomMajuscules = nom.toUpperCase();
+  const slug = nomMajuscules.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 24);
+  const numero = aammjj + (slug ? "-" + slug : "");
+  const validite = new Date(dateEmission.getTime() + 30 * 86400000);
+
+  el("d_numero").textContent = "N° " + numero;
+  el("d_dates").innerHTML =
+    "Émis le " + dateFr(dateEmission.toISOString().slice(0, 10)) + "<br>" +
+    "Valable jusqu'au " + dateFr(validite.toISOString().slice(0, 10));
+
+  /* Le titre du document devient le nom de fichier proposé par le navigateur
+     dans « Enregistrer au format PDF ». */
+  document.title = aammjj + " - Devis - " + (nomMajuscules || "CLIENT");
+  el("nom_fichier").textContent = document.title + ".pdf";
+
+  el("d_nom").textContent = nom || "Nom du client";
+  const contact = [];
+  if (el("cli_adresse").value.trim()) contact.push(el("cli_adresse").value.trim());
+  const localite = [el("cli_cp").value.trim(), el("cli_ville").value.trim()]
+    .filter(Boolean).join(" ");
+  if (localite) contact.push(localite);
+  const joignable = [el("cli_tel").value.trim(), el("cli_mail").value.trim()]
+    .filter(Boolean).join(" · ");
+  if (joignable) contact.push(joignable);
+  el("d_contact").innerHTML = contact.join("<br>");
+
+  el("d_type").textContent = el("ev_type").value || "Prestation";
+  el("d_typeclient").textContent = el("ev_client").value;
+  el("d_date").textContent = dateFr(el("ev_date").value);
+  el("d_quand").textContent = compteARebours(el("ev_date").value);
+  el("d_service").textContent = el("ev_service").value;
+  el("d_lieu").textContent = localite;
+  el("d_convives").textContent = convives || "—";
+  el("d_pizzas").textContent = nbPizzas ? nbPizzas + " pizzas" : "";
+
+  /* tableau */
+  const corps = el("d_lignes");
+  corps.innerHTML = "";
+  if (!lignesFinales.length) {
+    corps.innerHTML = '<tr><td colspan="4" style="color:#8A7768;padding:14px 10px">'
+      + "Renseigne des quantités pour composer le devis.</td></tr>";
+  }
+  ["Entrées", "Pizzas", "Desserts", "Prestation"].forEach(categorie => {
+    const duGroupe = lignesFinales.filter(l => l.cat === categorie);
+    if (!duGroupe.length) return;
+    const enTete = corps.insertRow();
+    enTete.className = "groupe";
+    const cellule = enTete.insertCell();
+    cellule.colSpan = 4;
+    cellule.textContent = categorie;
+    duGroupe.forEach(l => {
+      const tr = corps.insertRow();
+      const c1 = tr.insertCell();
+      c1.innerHTML = l.nom + (l.unite ? ' <span class="unite">· ' + l.unite + "</span>" : "");
+      const c2 = tr.insertCell(); c2.className = "num"; c2.textContent = l.qte;
+      const c3 = tr.insertCell(); c3.className = "num"; c3.textContent = euro(l.prix);
+      const c4 = tr.insertCell(); c4.className = "num"; c4.textContent = euro(l.montant);
+    });
+  });
+
+  /* totaux du document */
+  el("d_ligne_soustotal").hidden = remise === 0;
+  el("d_ligne_remise").hidden = remise === 0;
+  el("d_soustotal").textContent = euro(sousTotal);
+  el("d_remise").textContent = "− " + euro(remise);
+  el("d_total").textContent = euro(total);
+  el("d_taux_acompte").textContent = "de " + Math.round(tauxAcompte * 100) + " %";
+  el("d_libelle_acompte").textContent =
+    "Acompte à la réservation (" + Math.round(tauxAcompte * 100) + " %)";
+  el("d_acompte").textContent = euro(acompte);
+  el("d_solde").textContent = euro(total - acompte);
+
+  /* précisions */
+  const notes = el("notes").value.split("\n").map(t => t.trim()).filter(Boolean);
+  el("d_notes").hidden = notes.length === 0;
+  el("d_notes_liste").innerHTML = notes
+    .map(n => "<li>" + n.replace(/[<>]/g, "") + "</li>").join("");
+}
+
+function reinitialiser() {
+  if (!confirm("Effacer toutes les saisies et repartir d'un devis vierge ?")) return;
+  document.querySelectorAll(".saisie input, .saisie textarea").forEach(champ => {
+    if (champ.id.startsWith("prix_")) return;
+    if (champ.type === "number") champ.value = champ.id === "ev_convives" ? 60 : 0;
+    else champ.value = "";
+  });
+  document.querySelectorAll('.article input[type=checkbox]')
+    .forEach(c => { c.checked = false; });
+  el("dep_tarif").value = 2;
+  el("dep_franchise").value = 0;
+  el("acompte").value = 50;
+  el("piz_varietes").value = 8;
+  CATALOGUE.forEach(g => g.items.forEach(a => {
+    if (a.qteDefaut) el("qte_" + a.ref).value = a.qteDefaut;
+  }));
+  dernierConvives = null;
+  el("resultat_trajet").textContent =
+    "Renseigne la ville et le code postal du client, puis lance le calcul.";
+  el("ev_emission").value = new Date().toISOString().slice(0, 10);
+  rafraichir();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+/* ---------- fonctionnement hors connexion ---------- */
+/* Le service worker met l'outil en cache pour qu'il s'ouvre sans réseau, sur un
+   lieu de réception mal couvert par exemple. Il exige HTTPS : en ouvrant le
+   fichier en local (file://), l'enregistrement est simplement ignoré. */
+if ("serviceWorker" in navigator && location.protocol === "https:") {
+  navigator.serviceWorker.register("sw.js").catch(() => {});
+}
+
+/* ---------- démarrage ---------- */
+construireCatalogue();
+el("ev_emission").value = new Date().toISOString().slice(0, 10);
+document.querySelectorAll(".saisie input, .saisie textarea, .saisie select")
+  .forEach(champ => champ.addEventListener("input", rafraichir));
+rafraichir();
+</script>
+</body>
+</html>

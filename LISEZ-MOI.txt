@@ -1,0 +1,30 @@
+Devis Atelier Pizza Event — version installable sur iPhone
+==========================================================
+
+Contenu du dossier (les 6 fichiers vont ensemble, à la racine du dépôt) :
+
+  index.html              l'outil de devis (le fichier principal)
+  manifest.webmanifest    nom et icône de l'application
+  sw.js                   fonctionnement hors connexion
+  apple-touch-icon.png    icône affichée sur l'écran d'accueil iOS
+  icone-192.png           icône Android / navigateurs
+  icone-512.png           icône haute définition
+
+Publication (GitHub Pages, gratuit) :
+  1. Créer un compte sur github.com
+  2. Nouveau dépôt PUBLIC, nom peu devinable (ex. ape-devis-7k2m)
+  3. « uploading an existing file » : déposer les 6 fichiers
+  4. Settings > Pages > Source : Deploy from a branch > main > / (root) > Save
+  5. Après 1 à 2 minutes, l'adresse s'affiche :
+     https://<utilisateur>.github.io/<depot>/
+
+Sur iPhone :
+  Ouvrir l'adresse dans Safari > bouton Partager > Sur l'écran d'accueil.
+
+Mise à jour d'un tarif :
+  Modifier index.html sur GitHub (crayon > Commit changes), puis rouvrir
+  l'outil sur le téléphone en étant connecté : la nouvelle version se charge.
+
+Attention : une page GitHub Pages est publique. Le tarif du catalogue est donc
+visible par qui connaît l'adresse. Aucune donnée client n'est stockée dans les
+fichiers ni envoyée sur internet ; tout reste dans le navigateur.

@@ -1,0 +1,14 @@
+{
+  "name": "Devis Atelier Pizza Event",
+  "short_name": "Devis APE",
+  "description": "Génération des devis Atelier Pizza Event",
+  "start_url": "index.html",
+  "display": "browser",
+  "background_color": "#F3EEE7",
+  "theme_color": "#E4671C",
+  "lang": "fr",
+  "icons": [
+    { "src": "icone-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icone-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}
